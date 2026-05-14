@@ -1,0 +1,44 @@
+/* ========================= */
+/* Card Spacing Fix */
+/* ========================= */
+
+/* Har slide ke andar spacing */
+.slick-slide > div {
+  padding: 0 6px;   /* 👈 gap between cards */
+}
+
+/* Outer container se extra space remove karne ke liye */
+.slick-list {
+  margin: 0 -12px;
+}
+
+/* ========================= */
+/* Custom slick dots */
+/* ========================= */
+
+.slick-dots li button:before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  background-color: gray;
+  border-radius: 50%;
+  display: inline-block;
+  opacity: 1;
+  position: relative;
+  top: 10px;
+}
+
+.slick-dots li.slick-active button:before {
+  background-color: teal; /* active blue */
+  width: 16px;
+  height: 16px;
+}
+
+.slick-dots li {
+  margin: 0px 10px;
+}
+
+.slick-dots li button:hover:before {
+  transform: scale(1.3);
+  transition: all 0.3s;
+}
