@@ -2,42 +2,80 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const prompt = `
-You are a professional resume writer.
+    // ✅ VALIDATE REQUEST BODY
+    if (!body) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing request body",
+        }),
+        { status: 400 }
+      );
+    }
 
-Your job is to IMPROVE the given user data and rewrite it in a highly professional way using keys, dont add any new information on your own!.:
-personal_statement, experience, skills, education.
+    // ✅ CHECK API KEY
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({
+          error: "Missing GEMINI_API_KEY",
+        }),
+        { status: 500 }
+      );
+    }
+
+    // ✅ BETTER PROMPT
+    const prompt = `
+Return ONLY valid JSON in this exact format:
+
+{
+  "personal_statement": "",
+  "experience": "",
+  "skills": "",
+  "education": ""
+}
 
 Rules:
-- Return ONLY valid JSON
-- personal_statement should be a string
-- experience, skills, education must be comma separated strings
+- Do NOT add markdown
+- Do NOT add explanation
+- Do NOT wrap response in backticks
+- Improve the content professionally
+- Do NOT add fake information
+- experience, skills, education should remain comma separated strings
 
-Data:
-Name: ${body.name}
-Personal_Statement: ${body.personal_statement}
-Experience: ${body.experience}
-Education: ${body.education}
-Skills: ${body.skill}
+User Data:
+
+Name: ${body.name || ""}
+Personal Statement: ${body.personal_statement || ""}
+Experience: ${body.experience || ""}
+Education: ${body.education || ""}
+Skills: ${body.skill || ""}
 `;
 
+    // ✅ GEMINI REQUEST
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
         }),
       }
     );
 
+    // ✅ RESPONSE JSON
     const data = await response.json();
+
     console.log("GEMINI RESPONSE:", data);
 
-    // 🔴 API ERROR HANDLE
+    // ✅ HANDLE GEMINI API ERRORS
     if (data.error) {
       return new Response(
         JSON.stringify({
@@ -48,37 +86,49 @@ Skills: ${body.skill}
       );
     }
 
-    const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    // ✅ GET AI TEXT
+    const aiText =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
+    console.log("RAW AI TEXT:", aiText);
+
+    // ✅ NO RESPONSE
     if (!aiText) {
       return new Response(
-        JSON.stringify({ error: "No AI response", raw: data }),
+        JSON.stringify({
+          error: "No AI response received",
+          raw: data,
+        }),
         { status: 500 }
       );
-      
     }
 
-    // 🔥 CLEAN TEXT
+    // ✅ CLEAN RESPONSE
     const cleaned = aiText
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
 
+    console.log("CLEANED AI:", cleaned);
+
     let parsed;
 
+    // ✅ SAFE JSON PARSE
     try {
       parsed = JSON.parse(cleaned);
-    } catch {
+    } catch (parseError) {
+      console.error("JSON PARSE ERROR:", parseError);
+
       return new Response(
         JSON.stringify({
-          error: "Invalid JSON from AI",
+          error: "Invalid JSON returned from Gemini",
           raw: cleaned,
         }),
         { status: 500 }
       );
     }
 
-    // 🔴 FINAL VALIDATION
+    // ✅ FINAL VALIDATION
     if (
       !parsed.personal_statement ||
       !parsed.experience ||
@@ -94,14 +144,21 @@ Skills: ${body.skill}
       );
     }
 
+    // ✅ SUCCESS RESPONSE
     return new Response(JSON.stringify(parsed), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
 
   } catch (error) {
+    console.error("SERVER CRASH:", error);
+
     return new Response(
-      JSON.stringify({ error: "Server crashed" }),
+      JSON.stringify({
+        error: String(error),
+      }),
       { status: 500 }
     );
   }
