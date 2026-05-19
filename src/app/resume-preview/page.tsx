@@ -1,7 +1,7 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 import ModernTemplate from "@/src/components/templates/ModernTemplate";
 import ClassicTemplate from "@/src/components/templates/ClassicTemplate";
@@ -18,25 +18,27 @@ export type UserData = {
   skill: string;
 };
 
-export default function ResumePreview() {
+function ResumeContent() {
   const searchParams = useSearchParams();
 
-  const selected = searchParams.get("selected") || "MinimalTemplate";
-  const theme = searchParams.get("theme") || "blue";
+  const selected =
+    searchParams.get("selected") || "MinimalTemplate";
+
+  const theme =
+    searchParams.get("theme") || "blue";
 
   const [data, setData] = useState<UserData | null>(null);
 
-  // ✅ LOAD REAL DATA FROM LOCALSTORAGE
   useEffect(() => {
-  const stored = localStorage.getItem("userdata");
-  const urlData = searchParams.get("data");
+    const stored = localStorage.getItem("userdata");
+    const urlData = searchParams.get("data");
 
-  if (urlData) {
-    setData(JSON.parse(decodeURIComponent(urlData)));
-  } else if (stored) {
-    setData(JSON.parse(stored));
-  }
-}, []);
+    if (urlData) {
+      setData(JSON.parse(decodeURIComponent(urlData)));
+    } else if (stored) {
+      setData(JSON.parse(stored));
+    }
+  }, [searchParams]);
 
   const render = () => {
     if (!data) {
@@ -62,5 +64,17 @@ export default function ResumePreview() {
     }
   };
 
-  return <div className="flex justify-center items-center h-screen">{render()}</div>;
+  return (
+    <div className="flex justify-center items-center h-screen">
+      {render()}
+    </div>
+  );
+}
+
+export default function ResumePreview() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResumeContent />
+    </Suspense>
+  );
 }
