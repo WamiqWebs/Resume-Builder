@@ -53,8 +53,14 @@ const pdf = await page.pdf({
       },
     });
 
-  } catch (err) {
-    console.error("PDF ERROR:", err);
-    return NextResponse.json({ error: "PDF failed" }, { status: 500 });
-  }
+ } catch (err) {
+  console.error("PDF ERROR:", err);
+
+  return NextResponse.json(
+    {
+      error: String(err),
+    },
+    { status: 500 }
+  );
+}
 }
