@@ -22,7 +22,14 @@ export async function POST(req: Request) {
     const page = await browser.newPage();
 
     // ✅ OPEN PREVIEW PAGE
-   const url = `http://localhost:3000/resume-preview?selected=${selected}&theme=${theme}&data=${encodeURIComponent(JSON.stringify(body?.data))}`;
+  const baseUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://resume-builder-sand-omega-38.vercel.app";
+
+const url = `${baseUrl}/resume-preview?selected=${selected}&theme=${theme}&data=${encodeURIComponent(
+  JSON.stringify(body?.data)
+)}`;
     await page.goto(url, { waitUntil: "networkidle" });
 
     // ✅ WAIT FOR UI TO RENDER
