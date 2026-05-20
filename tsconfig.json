@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "src/app/api/contact-us-form/route.js", "src/app/api/regenerate/route.ts"  ],
+, "src/app/api/contact-us-form/route.ts", "src/app/api/regenerate/route.ts"  ],
   "exclude": ["node_modules"]
 }

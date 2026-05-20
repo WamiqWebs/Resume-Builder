@@ -11,7 +11,6 @@ import Footer from "../components/Footer";
 export default function Home() {
   return (
     <> 
-    <h1>VERSION TEST 123</h1>
     <Toaster />
      <Hero />
      <Features />

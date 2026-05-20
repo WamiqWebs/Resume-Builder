@@ -114,19 +114,22 @@ Skills: ${body.skill || ""}
     let parsed;
 
     // ✅ SAFE JSON PARSE
-    try {
-      parsed = JSON.parse(cleaned);
-    } catch (parseError) {
-      console.error("JSON PARSE ERROR:", parseError);
+ // ✅ SAFE JSON PARSE
+try {
+  parsed = JSON.parse(cleaned);
+} catch (parseError) {
+  console.error("JSON PARSE ERROR:", parseError);
 
-      return new Response(
-        JSON.stringify({
-          error: "Invalid JSON returned from Gemini",
-          raw: cleaned,
-        }),
-        { status: 500 }
-      );
-    }
+  // TEMPORARY DEBUG
+  return new Response(
+    JSON.stringify({
+      error: "Invalid JSON returned from Gemini",
+      raw_ai_response: aiText,
+      cleaned_response: cleaned,
+    }),
+    { status: 500 }
+  );
+}
 
     // ✅ FINAL VALIDATION
     if (

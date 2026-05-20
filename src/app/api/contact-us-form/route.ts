@@ -1,7 +1,7 @@
 // route.js
 import mysql from 'mysql2/promise';
 
-export async function POST(req) {
+export async function POST(req:Request) {
   try {
     const body = await req.json();
     const connection = await mysql.createConnection({
