@@ -30,15 +30,22 @@ export async function POST(req: Request) {
   const baseUrl =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
-    : "https://resume-builder-sand-omega-38.vercel.app";
+    : "https://resume-builder-git-main-wamiqwebs-projects.vercel.app";
 
 const url = `${baseUrl}/resume-preview?selected=${selected}&theme=${theme}&data=${encodeURIComponent(
   JSON.stringify(body?.data)
 )}`;
     await page.goto(url, { waitUntil: "networkidle" });
 
-    // ✅ WAIT FOR UI TO RENDER
-    await page.waitForTimeout(1500);
+// ✅ WAIT FOR UI TO RENDER
+await page.waitForTimeout(4000);
+
+// ✅ DEBUG SCREENSHOT
+await page.screenshot({
+  path: "/tmp/debug.png",
+});
+
+// ✅ GENERATE PDF
 const pdf = await page.pdf({
   width: "794px",
   height: "1122px",

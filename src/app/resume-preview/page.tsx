@@ -33,11 +33,13 @@ function ResumeContent() {
     const stored = localStorage.getItem("userdata");
     const urlData = searchParams.get("data");
 
-    if (urlData) {
-      setData(JSON.parse(decodeURIComponent(urlData)));
-    } else if (stored) {
-      setData(JSON.parse(stored));
-    }
+   if (urlData) {
+  try {
+    setData(JSON.parse(decodeURIComponent(urlData)));
+  } catch (err) {
+    console.error("URL DATA PARSE ERROR:", err);
+  }
+}
   }, [searchParams]);
 
   const render = () => {
@@ -65,7 +67,7 @@ function ResumeContent() {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-start min-h-screen p-4">
       {render()}
     </div>
   );
