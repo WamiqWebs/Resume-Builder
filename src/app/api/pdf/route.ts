@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { chromium } from "playwright";
+import { chromium } from "playwright-core";
+import chromiumPack from "@sparticuz/chromium";
 
 
 export async function POST(req: Request) {
@@ -18,7 +19,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing template" }, { status: 400 });
     }
 
-    const browser = await chromium.launch();
+    const browser = await chromium.launch({
+  args: chromiumPack.args,
+  executablePath: await chromiumPack.executablePath(),
+  headless: true,
+});
     const page = await browser.newPage();
 
     // ✅ OPEN PREVIEW PAGE
