@@ -19,11 +19,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing template" }, { status: 400 });
     }
 
-    const browser = await chromium.launch({
-  args: chromiumPack.args,
-  executablePath: await chromiumPack.executablePath(),
-  headless: true,
-});
+   const browser =
+  process.env.NODE_ENV === "development"
+    ? await chromium.launch({
+        headless: true,
+      })
+    : await chromium.launch({
+        args: chromiumPack.args,
+        executablePath: await chromiumPack.executablePath(),
+        headless: true,
+      });
     const page = await browser.newPage();
 
     // ✅ OPEN PREVIEW PAGE
