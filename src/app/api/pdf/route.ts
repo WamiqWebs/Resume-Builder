@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   const baseUrl =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
-    : "https://resume-builder-git-main-wamiqwebs-projects.vercel.app";
+    : "resume-builder-sand-omega-38.vercel.app";
 
 const url = `${baseUrl}/resume-preview?selected=${selected}&theme=${theme}&data=${encodeURIComponent(
   JSON.stringify(body?.data)
