@@ -1,83 +1,74 @@
 import { NextResponse } from "next/server";
+
 import { chromium } from "playwright-core";
 import chromiumPack from "@sparticuz/chromium";
 
-
 export async function POST(req: Request) {
   try {
-    // ✅ SAFE JSON PARSE (prevents crash)
-    let body;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-    }
+    const body = await req.json();
 
-    const { selected, theme } = body || {};
+    const { selected, theme } = body;
 
-    if (!selected) {
-      return NextResponse.json({ error: "Missing template" }, { status: 400 });
-    }
+    let browser;
 
-   const browser =
-  process.env.NODE_ENV === "development"
-    ? await chromium.launch({
-        headless: true,
-      })
-    : await chromium.launch({
-        args: chromiumPack.args,
-        executablePath: await chromiumPack.executablePath(),
+    // ✅ LOCAL DEVELOPMENT
+    if (process.env.NODE_ENV === "development") {
+      const { chromium: localChromium } =
+        await import("playwright");
+
+      browser = await localChromium.launch({
         headless: true,
       });
+    }
+
+    // ✅ VERCEL PRODUCTION
+    else {
+      browser = await chromium.launch({
+        args: chromiumPack.args,
+        executablePath:
+          await chromiumPack.executablePath(),
+        headless: true,
+      });
+    }
+
     const page = await browser.newPage();
 
-    // ✅ OPEN PREVIEW PAGE
-  const baseUrl =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000"
-    : "resume-builder-sand-omega-38.vercel.app";
+    const baseUrl =
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:3000"
+        : "https://resume-builder-git-main-wamiqwebs-projects.vercel.app";
 
-const url = `${baseUrl}/resume-preview?selected=${selected}&theme=${theme}&data=${encodeURIComponent(
-  JSON.stringify(body?.data)
-)}`;
-    await page.goto(url, { waitUntil: "networkidle" });
+    const url = `${baseUrl}/resume-preview?selected=${selected}&theme=${theme}`;
 
-// ✅ WAIT FOR UI TO RENDER
-await page.waitForTimeout(4000);
+    await page.goto(url, {
+      waitUntil: "networkidle",
+    });
 
-// ✅ DEBUG SCREENSHOT
-await page.screenshot({
-  path: "/tmp/debug.png",
-});
+    await page.waitForTimeout(2000);
 
-// ✅ GENERATE PDF
-const pdf = await page.pdf({
-  width: "794px",
-  height: "1122px",
-  printBackground: true,
-  margin: { top: "0", bottom: "0", left: "0", right: "0" },
-});
+    const pdf = await page.pdf({
+      width: "794px",
+      height: "1122px",
+      printBackground: true,
+    });
 
     await browser.close();
 
-    // ✅ BUFFER → UINT8ARRAY FIX
-    const uint8Array = new Uint8Array(pdf);
-
-    return new NextResponse(uint8Array, {
+    return new NextResponse(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": "attachment; filename=CV.pdf",
+        "Content-Disposition":
+          "attachment; filename=CV.pdf",
       },
     });
+  } catch (err) {
+    console.error("PDF ERROR:", err);
 
- } catch (err) {
-  console.error("PDF ERROR:", err);
-
-  return NextResponse.json(
-    {
-      error: String(err),
-    },
-    { status: 500 }
-  );
-}
+    return NextResponse.json(
+      {
+        error: String(err),
+      },
+      { status: 500 }
+    );
+  }
 }

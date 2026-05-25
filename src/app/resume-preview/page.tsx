@@ -1,5 +1,4 @@
 "use client";
-export const dynamic = "force-dynamic";
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -31,53 +30,65 @@ function ResumeContent() {
   const [data, setData] = useState<UserData | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("userdata");
-    const urlData = searchParams.get("data");
+    try {
+      const stored =
+        localStorage.getItem("userdata");
 
-   if (urlData) {
-  try {
-    setData(JSON.parse(decodeURIComponent(urlData)));
-  } catch (err) {
-    console.error("URL DATA PARSE ERROR:", err);
-  }
-}
+      const urlData =
+        searchParams.get("data");
+
+      if (urlData) {
+        const parsed = JSON.parse(
+          decodeURIComponent(urlData)
+        );
+
+        setData(parsed);
+      } else if (stored) {
+        setData(JSON.parse(stored));
+      }
+    } catch (err) {
+      console.error("DATA LOAD ERROR:", err);
+    }
   }, [searchParams]);
 
-  const render = () => {
-    if (!data) {
+  if (!data) {
+    return (
+      <div className="text-center mt-5 text-gray-500">
+        Loading resume data...
+      </div>
+    );
+  }
+
+  switch (selected) {
+    case "ModernTemplate":
       return (
-        <div className="text-center mt-5 text-gray-500">
-          Loading resume data...
-        </div>
+        <ModernTemplate
+          data={data}
+          theme={theme}
+        />
       );
-    }
 
-    switch (selected) {
-      case "ModernTemplate":
-        return <ModernTemplate data={data} theme={theme} />;
+    case "ClassicTemplate":
+      return (
+        <ClassicTemplate data={data} />
+      );
 
-      case "ClassicTemplate":
-        return <ClassicTemplate data={data} />;
+    case "MinimalTemplate":
+      return (
+        <MinimalTemplate data={data} />
+      );
 
-      case "MinimalTemplate":
-        return <MinimalTemplate data={data} />;
-
-      default:
-        return <p>Invalid template</p>;
-    }
-  };
-
-  return (
-    <div className="flex justify-center items-start min-h-screen p-4">
-      {render()}
-    </div>
-  );
+    default:
+      return <p>Invalid template</p>;
+  }
 }
 
 export default function ResumePreview() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <ResumeContent />
+      <div className="flex justify-center items-center min-h-screen">
+        <ResumeContent />
+      </div>
     </Suspense>
   );
 }
