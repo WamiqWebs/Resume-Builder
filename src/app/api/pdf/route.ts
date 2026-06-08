@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { chromium } from "playwright-core";
+import playwright from "playwright-core";
 import chromiumPack from "@sparticuz/chromium";
 
 export async function POST(req: Request) {
@@ -9,36 +9,48 @@ export async function POST(req: Request) {
 
     const { selected, theme } = body;
 
+    console.log("NODE_ENV =", process.env.NODE_ENV);
+    console.log("VERCEL =", process.env.VERCEL);
+
     let browser;
 
-    // ✅ LOCAL DEVELOPMENT
-    if (process.env.NODE_ENV === "development") {
-      const { chromium: localChromium } =
-        await import("playwright");
+    // LOCAL MACHINE
+    if (!process.env.VERCEL) {
+      console.log("USING LOCAL PLAYWRIGHT");
 
-      browser = await localChromium.launch({
+      const { chromium } = await import("playwright");
+
+      browser = await chromium.launch({
         headless: true,
       });
     }
 
-    // ✅ VERCEL PRODUCTION
+    // VERCEL
     else {
-      browser = await chromium.launch({
+      console.log("USING VERCEL CHROMIUM");
+
+      const exePath = await chromiumPack.executablePath();
+
+      console.log("exePath =", exePath);
+
+      browser = await playwright.chromium.launch({
         args: chromiumPack.args,
-        executablePath:
-          await chromiumPack.executablePath(),
+        executablePath: exePath,
         headless: true,
       });
     }
 
     const page = await browser.newPage();
 
-    const baseUrl =
-      process.env.NODE_ENV === "development"
-        ? "http://localhost:3000"
-        : "https://resume-builder-git-main-wamiqwebs-projects.vercel.app";
+    const baseUrl = !process.env.VERCEL
+      ? "http://localhost:3000"
+      : "https://resume-builder-git-main-wamiqwebs-projects.vercel.app";
 
-    const url = `${baseUrl}/resume-preview?selected=${selected}&theme=${theme}`;
+    const url = `${baseUrl}/resume-preview?selected=${selected}&theme=${theme}&data=${encodeURIComponent(
+      JSON.stringify(body.data)
+    )}`;
+
+    console.log("Opening URL:", url);
 
     await page.goto(url, {
       waitUntil: "networkidle",
@@ -57,8 +69,7 @@ export async function POST(req: Request) {
     return new NextResponse(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition":
-          "attachment; filename=CV.pdf",
+        "Content-Disposition": "attachment; filename=CV.pdf",
       },
     });
   } catch (err) {

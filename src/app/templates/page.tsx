@@ -26,29 +26,35 @@ export default function TemplatesPage() {
   const [selected, setSelected] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
- useEffect(() => {
-  const stored = localStorage.getItem("userdata");
+  useEffect(() => {
+    const stored = localStorage.getItem("userdata");
 
-  if (stored) {
-    const parsed = JSON.parse(stored);
-    
+    if (stored) {
+      const parsed = JSON.parse(stored);
 
-    const isValid =
-      parsed.name?.trim() &&
-      parsed.email?.trim() &&
-      parsed.phone?.trim();
+      const savedAi = localStorage.getItem(
+    "regeneratedData"
+  );
 
-    if (isValid) {
-      setData(parsed);
-      
+  if (savedAi) {
+    setAiData(JSON.parse(savedAi));
+  }
+      const isValid =
+        parsed.name?.trim() &&
+        parsed.email?.trim() &&
+        parsed.phone?.trim();
+
+      if (isValid) {
+        setData(parsed);
+
+      } else {
+        setData(null);
+        console.error("No Data Found in LocalStorage");
+      }
     } else {
       setData(null);
-      console.error("No Data Found in LocalStorage");
     }
-  } else {
-    setData(null);
-  }
-}, []);
+  }, []);
 
   useEffect(() => {
     if (data) localStorage.setItem("userdata", JSON.stringify(data));
@@ -91,6 +97,11 @@ export default function TemplatesPage() {
       };
 
       setAiData(newData);
+
+      localStorage.setItem(
+        "regeneratedData",
+        JSON.stringify(newData)
+      );
     } catch (err) {
       console.error(err);
     } finally {
@@ -100,6 +111,7 @@ export default function TemplatesPage() {
 
   const handleOriginal = () => {
     setAiData(null);
+    localStorage.removeItem("regeneratedData");
   };
 
   const renderTemplate = () => {
@@ -187,101 +199,101 @@ export default function TemplatesPage() {
 
   return (
     <>
-    <section
-      className="w-screen ml-[calc(50%-50vw)] py-8 min-h-screen"
-      style={{
-        background: "linear-gradient(to right, limegreen, teal)",
-      }}
-    >
-      <div className="p-5 text-white max-w-7xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-5">
-          Select Template
-        </h1>
+      <section
+        className="w-screen ml-[calc(50%-50vw)] py-8 min-h-screen"
+        style={{
+          background: "linear-gradient(to right, limegreen, teal)",
+        }}
+      >
+        <div className="p-5 text-white max-w-7xl mx-auto">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-5">
+            Select Template
+          </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {templates.map((t) => (
-            <div
-              key={t}
-              onClick={() => setSelected(t)}
-              className={`p-5 border rounded-lg cursor-pointer transition
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {templates.map((t) => (
+              <div
+                key={t}
+                onClick={() => setSelected(t)}
+                className={`p-5 border rounded-lg cursor-pointer transition
               ${selected === t ? "border-2 border-[#111827] bg-black/50" : ""
-                }`}
-            >
-              <h2 className="text-lg font-semibold">{t}</h2>
-            </div>
-          ))}
+                  }`}
+              >
+                <h2 className="text-lg font-semibold">{t}</h2>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="my-10 flex flex-col items-center justify-center"
+            ref={templateRef}
+          >
+            {renderTemplate()}
+
+            {selected === "ModernTemplate" && (
+              <div className="p-2 flex items-center justify-center gap-2">
+                <div
+                  className="h-4 w-4 border rounded-full bg-blue-800"
+                  onClick={() => setTheme("blue")}
+                />
+                <div
+                  className="h-4 w-4 border rounded-full bg-purple-800"
+                  onClick={() => setTheme("purple")}
+                />
+                <div
+                  className="h-4 w-4 border rounded-full bg-gray-800"
+                  onClick={() => setTheme("gray")}
+                />
+                <div
+                  className="h-4 w-4 border rounded-full bg-green-800"
+                  onClick={() => setTheme("green")}
+                />
+                <div
+                  className="h-4 w-4 border rounded-full bg-cyan-800"
+                  onClick={() => setTheme("cyan")}
+                />
+              </div>
+            )}
+          </div>
+
+          {data &&
+            (selected === "ClassicTemplate" ||
+              selected === "ModernTemplate") && (
+              <div className="flex justify-center items-center mt-5 gap-3">
+                <button
+                  onClick={handleRegenerate}
+                  className="px-4 py-2 rounded-lg bg-[#111827] hover:bg-green-500"
+                  disabled={loading}
+                >
+                  {loading ? "Regenerating..." : "Regenerate CV"}
+                </button>
+
+                <button
+                  onClick={handleOriginal}
+                  className="px-4 py-2 rounded-lg bg-[#111827] hover:bg-green-500"
+                >
+                  Original CV
+                </button>
+              </div>
+            )}
+
+          {data &&
+            (selected === "MinimalTemplate" ||
+              selected === "ModernTemplate" ||
+              selected === "ClassicTemplate") && (
+              <div className="flex justify-center p-2">
+                <button
+                  disabled={!selected || isDownloading}
+                  className="px-3 py-2 bg-red-500 hover:bg-green-500 rounded disabled:opacity-50"
+                  onClick={handleDownloadPDF}
+                >
+                  Download CV
+                </button>
+              </div>
+            )}
         </div>
-
-        <div
-          className="my-10 flex flex-col items-center justify-center"
-          ref={templateRef}
-        >
-          {renderTemplate()}
-
-          {selected === "ModernTemplate" && (
-            <div className="p-2 flex items-center justify-center gap-2">
-              <div
-                className="h-4 w-4 border rounded-full bg-blue-800"
-                onClick={() => setTheme("blue")}
-              />
-              <div
-                className="h-4 w-4 border rounded-full bg-purple-800"
-                onClick={() => setTheme("purple")}
-              />
-              <div
-                className="h-4 w-4 border rounded-full bg-gray-800"
-                onClick={() => setTheme("gray")}
-              />
-              <div
-                className="h-4 w-4 border rounded-full bg-green-800"
-                onClick={() => setTheme("green")}
-              />
-              <div
-                className="h-4 w-4 border rounded-full bg-cyan-800"
-                onClick={() => setTheme("cyan")}
-              />
-            </div>
-          )}
-        </div>
-
-        {data &&
-          (selected === "ClassicTemplate" ||
-            selected === "ModernTemplate") && (
-            <div className="flex justify-center items-center mt-5 gap-3">
-              <button
-                onClick={handleRegenerate}
-                className="px-4 py-2 rounded-lg bg-[#111827] hover:bg-green-500"
-                disabled={loading}
-              >
-                {loading ? "Regenerating..." : "Regenerate CV"}
-              </button>
-
-              <button
-                onClick={handleOriginal}
-                className="px-4 py-2 rounded-lg bg-[#111827] hover:bg-green-500"
-              >
-                Original CV
-              </button>
-            </div>
-          )}
-
-        {data &&
-          (selected === "MinimalTemplate" ||
-            selected === "ModernTemplate" ||
-            selected === "ClassicTemplate") && (
-            <div className="flex justify-center p-2">
-              <button
-                disabled={!selected || isDownloading}
-                className="px-3 py-2 bg-red-500 hover:bg-green-500 rounded disabled:opacity-50"
-                onClick={handleDownloadPDF}
-              >
-                Download CV
-              </button>
-            </div>
-          )}
-      </div>
-    </section>
-     <Footer />
+      </section>
+      <Footer />
     </>
-  ); 
+  );
 }
