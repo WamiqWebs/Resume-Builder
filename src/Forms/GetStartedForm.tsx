@@ -82,12 +82,21 @@ const handleChange = (
   });
 };
 const router = useRouter();
- const handleSubmit = (e:React.FormEvent<HTMLFormElement>)=>{
+const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
-  localStorage.setItem("userdata",JSON.stringify(userdata));
+
+  localStorage.setItem(
+    "userdata",
+    JSON.stringify(userdata)
+  );
+
+  // Purana AI regenerated CV delete karo
+  localStorage.removeItem("regeneratedData");
+
   router.push("/templates");
-  console.log(userdata); 
- }
+
+  console.log(userdata);
+};
   return(
     <>
      <form onSubmit={handleSubmit} className="py-2 md:py-5 border-2 text-white shadow-teal-600 border-teal-500 grid grid-cols-1 font-semibold gap-1 bg-linear-to-b from-lime-500 to-lime-300 rounded-lg shadow-lg">

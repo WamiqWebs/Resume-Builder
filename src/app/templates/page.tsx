@@ -33,12 +33,12 @@ export default function TemplatesPage() {
       const parsed = JSON.parse(stored);
 
       const savedAi = localStorage.getItem(
-    "regeneratedData"
-  );
+        "regeneratedData"
+      );
 
-  if (savedAi) {
-    setAiData(JSON.parse(savedAi));
-  }
+      if (savedAi) {
+        setAiData(JSON.parse(savedAi));
+      }
       const isValid =
         parsed.name?.trim() &&
         parsed.email?.trim() &&
@@ -102,6 +102,8 @@ export default function TemplatesPage() {
         "regeneratedData",
         JSON.stringify(newData)
       );
+
+      localStorage.getItem("regeneratedData");
     } catch (err) {
       console.error(err);
     } finally {
