@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 
     const baseUrl = !process.env.VERCEL
       ? "http://localhost:3000"
-      : "https://resume-builder-sand-omega-38.vercel.app";
+      : "resume-builder-git-main-wamiqwebs-projects.vercel.app";
 
     const url = `${baseUrl}/resume-preview?selected=${selected}&theme=${theme}&data=${encodeURIComponent(
       JSON.stringify(body.data)
@@ -73,13 +73,14 @@ export async function POST(req: Request) {
       },
     });
   } catch (err) {
-    console.error("PDF ERROR:", err);
+  console.error("PDF ERROR FULL:", err);
 
-    return NextResponse.json(
-      {
-        error: String(err),
-      },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(
+    {
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : null,
+    },
+    { status: 500 }
+  );
+}
 }
