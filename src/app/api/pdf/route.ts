@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+export const runtime = "nodejs";
 
+import { NextResponse } from "next/server";
 import playwright from "playwright-core";
 import chromiumPack from "@sparticuz/chromium";
 
