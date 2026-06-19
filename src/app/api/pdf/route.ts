@@ -1,7 +1,8 @@
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import playwright from "playwright-core";
+import { chromium } from "playwright";
 import chromiumPack from "@sparticuz/chromium";
 
 export async function POST(req: Request) {
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
 
       console.log("exePath =", exePath);
 
-      browser = await playwright.chromium.launch({
+      browser = await chromium.launch({
         args: chromiumPack.args,
         executablePath: exePath,
         headless: true,
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
 
     const baseUrl = !process.env.VERCEL
       ? "http://localhost:3000"
-      : "resume-builder-sand-omega-38.vercel.app";
+      : "https://resume-builder-sand-omega-38.vercel.app";
 
     const url = `${baseUrl}/resume-preview?selected=${selected}&theme=${theme}&data=${encodeURIComponent(
       JSON.stringify(body.data)
@@ -74,14 +75,14 @@ export async function POST(req: Request) {
       },
     });
   } catch (err) {
-  console.error("PDF ERROR FULL:", err);
+    console.error("PDF ERROR FULL:", err);
 
-  return NextResponse.json(
-    {
-      error: err instanceof Error ? err.message : String(err),
-      stack: err instanceof Error ? err.stack : null,
-    },
-    { status: 500 }
-  );
-}
+    return NextResponse.json(
+      {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : null,
+      },
+      { status: 500 }
+    );
+  }
 }
