@@ -1,9 +1,10 @@
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { chromium } from "playwright";
-import chromiumPack from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 
 export async function POST(req: Request) {
   try {
@@ -14,37 +15,35 @@ export async function POST(req: Request) {
     console.log("NODE_ENV =", process.env.NODE_ENV);
     console.log("VERCEL =", process.env.VERCEL);
 
+    const isVercel = !!process.env.VERCEL;
+
     let browser;
 
-    // LOCAL MACHINE
-    if (!process.env.VERCEL) {
-      console.log("USING LOCAL PLAYWRIGHT");
+    if (!isVercel) {
+      console.log("USING LOCAL PUPPETEER");
 
-      const { chromium } = await import("playwright");
+      const puppeteerLocal = await import("puppeteer");
 
-      browser = await chromium.launch({
+      browser = await puppeteerLocal.default.launch({
         headless: true,
       });
-    }
-
-    // VERCEL
-    else {
+    } else {
       console.log("USING VERCEL CHROMIUM");
 
-      const exePath = await chromiumPack.executablePath();
+      const executablePath = await chromium.executablePath();
 
-      console.log("exePath =", exePath);
+      console.log("Chromium Path:", executablePath);
 
-      browser = await chromium.launch({
-        args: chromiumPack.args,
-        executablePath: exePath,
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        executablePath,
         headless: true,
       });
     }
 
     const page = await browser.newPage();
 
-    const baseUrl = !process.env.VERCEL
+    const baseUrl = !isVercel
       ? "http://localhost:3000"
       : "https://resume-builder-sand-omega-38.vercel.app";
 
@@ -55,14 +54,13 @@ export async function POST(req: Request) {
     console.log("Opening URL:", url);
 
     await page.goto(url, {
-      waitUntil: "networkidle",
+      waitUntil: "networkidle2",
     });
 
-    await page.waitForTimeout(2000);
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     const pdf = await page.pdf({
-      width: "794px",
-      height: "1122px",
+      format: "A4",
       printBackground: true,
     });
 
@@ -75,7 +73,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (err) {
-    console.error("PDF ERROR FULL:", err);
+    console.error("PDF ERROR:", err);
 
     return NextResponse.json(
       {
