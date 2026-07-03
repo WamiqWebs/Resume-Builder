@@ -7,35 +7,28 @@ import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
 
 export async function POST(req: Request) {
+  let browser;
+
   try {
     const body = await req.json();
-
-    const { selected, theme } = body;
-
-    console.log("NODE_ENV =", process.env.NODE_ENV);
-    console.log("VERCEL =", process.env.VERCEL);
+    const { selected, theme, data } = body;
 
     const isVercel = !!process.env.VERCEL;
 
-    let browser;
-
+    // =========================
+    // LAUNCH BROWSER
+    // =========================
     if (!isVercel) {
-      console.log("USING LOCAL PUPPETEER");
-
       const puppeteerLocal = await import("puppeteer");
 
       browser = await puppeteerLocal.default.launch({
         headless: true,
       });
     } else {
-      console.log("USING VERCEL CHROMIUM");
-
       const executablePath = await chromium.executablePath();
 
-      console.log("Chromium Path:", executablePath);
-
       browser = await puppeteer.launch({
-        args: chromium.args,
+        args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
         executablePath,
         headless: true,
       });
@@ -43,22 +36,31 @@ export async function POST(req: Request) {
 
     const page = await browser.newPage();
 
-    const baseUrl = !isVercel
-      ? "http://localhost:3000"
-      : "https://resume-builder-sand-omega-38.vercel.app";
+    // =========================
+    // BASE URL (SAFE)
+    // =========================
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
 
     const url = `${baseUrl}/resume-preview?selected=${selected}&theme=${theme}&data=${encodeURIComponent(
-      JSON.stringify(body.data)
+      JSON.stringify(data || {})
     )}`;
 
     console.log("Opening URL:", url);
 
+    // =========================
+    // LOAD PAGE
+    // =========================
     await page.goto(url, {
       waitUntil: "networkidle2",
     });
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
+    // =========================
+    // GENERATE PDF
+    // =========================
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
@@ -73,6 +75,8 @@ export async function POST(req: Request) {
       },
     });
   } catch (err) {
+    if (browser) await browser.close();
+
     console.error("PDF ERROR:", err);
 
     return NextResponse.json(
